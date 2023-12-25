@@ -26,13 +26,15 @@ IdtoSymbol <- function(seurObj, species = "human", release = 110) {
     ensembl <- useDataset(dataset = species, mart = ensembl)
   }
   
-  # Retrieve corresponding gene symbols.
+  # Retrieve corresponding gene symbols. Make any duplicate symbols unique.
   geneIDs <- getSymbols(ensembl, geneIDs)
+  geneIDs$external_gene_name <- make.unique(geneIDs$external_gene_name)
   
-  # Update @counts and @data in the given Seurat object.
+  # Update @counts, @data, and @meta.features in the given Seurat object.
   assay <- seurObj@assays$RNA
   assay@counts@Dimnames[[1]]     <- geneIDs$external_gene_name
   assay@data@Dimnames[[1]]       <- geneIDs$external_gene_name
+  rownames(assay@meta.features)  <- geneIDs$external_gene_name
   seurObj@assays$RNA <- assay
   
   return(seurObj)
