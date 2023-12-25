@@ -3,8 +3,9 @@ library(biomaRt)
 
 # Convert Ensembl gene IDs to gene symbols in-place for the given Seurat object.
 IdtoSymbol <- function(seurObj, species = "human") {
-  # Retrieve gene IDs from the given Seurat object.
-  geneIDs <- rownames(seurObj@assays[["RNA"]]@meta.features)
+  # Retrieve gene IDs from the given Seurat object and remove version numbers.
+  geneIDs <- rownames(seurObj@assays$RNA@meta.features)
+  geneIDs <- gsub("\\.\\d+$", "", geneIDs)
   
   # Select the appropriate BioMart dataset.
   ensembl <- useEnsembl(biomart = "genes")
@@ -23,13 +24,29 @@ IdtoSymbol <- function(seurObj, species = "human") {
   
   # Retrieve corresponding gene symbols.
   geneIDs <- getSymbols(ensembl, geneIDs)
+  
+  # Update @counts and @data in the given Seurat object.
+  assay <- seurObj@assays$RNA
+  assay@counts@Dimnames[[1]]     <- geneIDs$external_gene_name
+  assay@data@Dimnames[[1]]       <- geneIDs$external_gene_name
+  seurObj@assays$RNA <- assay
+  
+  return(seurObj)
 }
 
 # Retrieve corresponding gene symbols via BioMart.
 getSymbols <- function(ensembl, geneIDs) {
-  geneIDs <- getBM(attributes = c('ensembl_gene_id_version', 'external_gene_name'),
-                   filters = 'ensembl_gene_id_version',
+  geneIDs <- getBM(attributes = c('ensembl_gene_id', 'external_gene_name'),
+                   filters = 'ensembl_gene_id',
                    values = geneIDs,
                    mart = ensembl)
+  
+  # If a gene symbol is unavailable, use the gene ID instead.
+  for (i in 1:nrow(geneIDs)) {
+    if (geneIDs$external_gene_name[i] == "") {
+      geneIDs$external_gene_name[i] = geneIDs$ensembl_gene_id[i]
+    }
+  }
+  
   return(geneIDs)
 }
