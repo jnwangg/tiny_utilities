@@ -2,13 +2,17 @@ library(Seurat)
 library(biomaRt)
 
 # Convert Ensembl gene IDs to gene symbols in-place for the given Seurat object.
-IdtoSymbol <- function(seurObj, species = "human") {
+IdtoSymbol <- function(seurObj, species = "human", release = 110) {
+  # Confirm function parameters to user.
+  print(paste0("Converting Seurat object using database '", species, "' and Ensembl release ", release, "."))
+  print("Please double-check these are your desired parameters.")
+  
   # Retrieve gene IDs from the given Seurat object and remove version numbers.
   geneIDs <- rownames(seurObj@assays$RNA@meta.features)
   geneIDs <- gsub("\\.\\d+$", "", geneIDs)
   
   # Select the appropriate BioMart dataset.
-  ensembl <- useEnsembl(biomart = "genes")
+  ensembl <- useEnsembl(biomart = "genes", version = release)
   if (species == "human") {
     ensembl <- useDataset(dataset = "hsapiens_gene_ensembl", mart = ensembl)
   }
