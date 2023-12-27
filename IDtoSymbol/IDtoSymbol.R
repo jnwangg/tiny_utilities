@@ -1,14 +1,23 @@
 library(Seurat)
 library(biomaRt)
 
-# Convert Ensembl gene IDs to gene symbols in-place for the given Seurat object.
-IdtoSymbol <- function(seurObj, species = "human", release = 110, saveConversion = FALSE) {
+#' @title IDtoSymbol
+#'
+#' @description Convert Ensembl gene IDs to gene symbols in-place for the given Seurat object.
+#' @param object A Seurat object.
+#' @param species BioMart dataset to query. Default: human (hsapiens_gene_ensembl).
+#' @param release Ensembl release to query. Default: 110 (latest as of Dec. 2023).
+#' @param saveConversion Saves ID-symbol conversion dataframe to global environment as an object 'conversions'. Default: TRUE
+#' 
+#' @return Converted Seurat object.
+#'
+IDtoSymbol <- function(object, species = "human", release = 110, saveConversion = FALSE) {
   # Confirm function parameters to user.
   print(paste0("Converting Seurat object using database '", species, "' and Ensembl release ", release, "."))
   print("Please double-check these are your desired parameters.")
   
   # Retrieve gene IDs from the given Seurat object and remove version numbers.
-  geneIDs <- rownames(seurObj@assays$RNA@meta.features)
+  geneIDs <- rownames(object@assays$RNA@meta.features)
   geneIDs <- gsub("\\.\\d+$", "", geneIDs)
   
   # Select the appropriate BioMart dataset.
@@ -35,19 +44,26 @@ IdtoSymbol <- function(seurObj, species = "human", release = 110, saveConversion
                                      geneIDs$external_gene_name)
   
   # If desired, save ID-Symbol conversion dataframe to global environment.
-  if (saveConversion) assign("IDtoSymbol", geneIDs, envir = .GlobalEnv)
+  if (saveConversion) assign("conversions", geneIDs, envir = .GlobalEnv)
   
   # Update @counts, @data, and @meta.features in the given Seurat object.
-  assay <- seurObj@assays$RNA
+  assay <- object@assays$RNA
   assay@counts@Dimnames[[1]]     <- geneIDs$external_gene_name
   assay@data@Dimnames[[1]]       <- geneIDs$external_gene_name
   rownames(assay@meta.features)  <- geneIDs$external_gene_name
-  seurObj@assays$RNA <- assay
+  object@assays$RNA <- assay
   
-  return(seurObj)
+  return(object)
 }
 
-# Retrieve corresponding gene symbols via BioMart.
+#' @title getSymbols
+#' 
+#' @description Retrieve corresponding gene symbols via BioMart.
+#' @param ensembl BioMart database & dataset to query.
+#' @param geneIDs List of Ensembl IDs to convert.
+#' 
+#' @return Dataframe of gene IDs and converted symbols.
+#' 
 getSymbols <- function(ensembl, geneIDs) {
   geneIDs <- getBM(attributes = c('ensembl_gene_id', 'external_gene_name'),
                    filters = 'ensembl_gene_id',
