@@ -30,6 +30,10 @@ IdtoSymbol <- function(seurObj, species = "human", release = 110) {
   geneIDs <- getSymbols(ensembl, geneIDs)
   geneIDs$external_gene_name <- make.unique(geneIDs$external_gene_name)
   
+  # Replace any underscores with dashes, which are not allowed in Seurat feature names.
+  geneIDs$external_gene_name <- gsub(pattern = "_", replacement = "-", 
+                                     geneIDs$external_gene_name)
+  
   # Update @counts, @data, and @meta.features in the given Seurat object.
   assay <- seurObj@assays$RNA
   assay@counts@Dimnames[[1]]     <- geneIDs$external_gene_name
