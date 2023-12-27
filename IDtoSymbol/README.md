@@ -37,19 +37,17 @@ To use other BioMart datasets, simply provide their name. E.g. `drerio_gene_ense
 ## 📖 Examples
 Run `IDtoSymbol` on a object with human genes. Use the latest Ensembl release, and save the conversion dataframe:
 ```
-IDtoSymbol(
-  Human_SeurObj,
-  species = "human",
-  release = 110,
-  saveConversion = TRUE
-)
+Human_SeurObj <- IDtoSymbol(
+                   Human_SeurObj,
+                   species = "human",
+                   release = 110,
+                   saveConversion = TRUE)
 ```
 Run `IDtoSymbol` on a object with zebrafish genes. Use Ensembl release 80, and do not save the conversion dataframe:
 ```
-IDtoSymbol(
-  Zebrafish_SeurObj,
-  species = "drerio_gene_ensembl",
-  release = 80,
-  saveConversion = FALSE
-)      
+Zebrafish_SeurObj <- IDtoSymbol(
+                       Zebrafish_SeurObj,
+                       species = "drerio_gene_ensembl",
+                       release = 80,
+                       saveConversion = FALSE)      
 ```
