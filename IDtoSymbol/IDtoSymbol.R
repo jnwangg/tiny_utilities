@@ -2,7 +2,7 @@ library(Seurat)
 library(biomaRt)
 
 # Convert Ensembl gene IDs to gene symbols in-place for the given Seurat object.
-IdtoSymbol <- function(seurObj, species = "human", release = 110) {
+IdtoSymbol <- function(seurObj, species = "human", release = 110, saveConversion = FALSE) {
   # Confirm function parameters to user.
   print(paste0("Converting Seurat object using database '", species, "' and Ensembl release ", release, "."))
   print("Please double-check these are your desired parameters.")
@@ -33,6 +33,9 @@ IdtoSymbol <- function(seurObj, species = "human", release = 110) {
   # Replace any underscores with dashes, which are not allowed in Seurat feature names.
   geneIDs$external_gene_name <- gsub(pattern = "_", replacement = "-", 
                                      geneIDs$external_gene_name)
+  
+  # If desired, save ID-Symbol conversion dataframe to global environment.
+  if (saveConversion) assign("IDtoSymbol", geneIDs, envir = .GlobalEnv)
   
   # Update @counts, @data, and @meta.features in the given Seurat object.
   assay <- seurObj@assays$RNA
